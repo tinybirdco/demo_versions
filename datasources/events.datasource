@@ -1,0 +1,11 @@
+
+SCHEMA >
+    `id` String `json:$.id`,
+    `ts` DateTime64(3) `json:$.ts`,
+    `val` String `json:$.val`,
+    `att` Map(String, String) `json:$.att`
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toMonth(ts)"
+ENGINE_SORTING_KEY "id, ts"
+ENGINE_TTL "toDateTime(ts) + toIntervalDay(14)"

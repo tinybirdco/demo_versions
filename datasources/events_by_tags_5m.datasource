@@ -1,0 +1,10 @@
+
+SCHEMA >
+    `Metric` String,
+    `Timestamp` DateTime,
+    `Value` AggregateFunction(avg, Int8),
+    `Environment` String
+
+ENGINE "AggregatingMergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(Timestamp)"
+ENGINE_SORTING_KEY "Environment, Metric, Timestamp"
