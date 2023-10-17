@@ -1,100 +1,99 @@
+VERSION 1
 TOKEN "events_by_tags_chart_endpoint_read" READ
 
 NODE result_15m
 SQL >
 
     %
-        SELECT 
-          formatDateTime(Timestamp, '%Y-%m-%dT%H:%M:%SZ', 'UTC') as tsok,
-          Environment, Metric,
-          round(avgMerge(Value),2) as Value
-          FROM events_by_tags_15m
-        WHERE 1
-        {% if defined(start_ts) %}
-        and Timestamp > parseDateTimeBestEffort({{String(start_ts, '1695059358000')}})
-        {% else %}
-        and Timestamp > now() - INTERVAL 1 HOUR
-        {% end %}
-        {% if defined(end_ts) %}
-        and Timestamp < parseDateTimeBestEffort({{String(end_ts, '1695064557000')}})
-        {% else %}
-        and Timestamp < now()
-        {% end %}
-        {% if defined(metric) %}
-        and Metric = {{String(metric, 'act')}}
-        {% end %}
-        and Environment = {{String(environment, 'prod', required=True)}}
-        GROUP BY Environment, Metric, Timestamp
-
+    SELECT 
+      formatDateTime(Timestamp, '%Y-%m-%dT%H:%M:%SZ', 'UTC') as tsok,
+      Environment, Datacenter, Metric,
+      round(avgMerge(Value),2) as Value
+      FROM events_by_tags_15m
+    WHERE 1
+    {% if defined(start_ts) %}
+    and Timestamp > parseDateTimeBestEffort({{String(start_ts, '1695059358000')}})
+    {% else %}
+    and Timestamp > now() - INTERVAL 1 HOUR
+    {% end %}
+    {% if defined(end_ts) %}
+    and Timestamp < parseDateTimeBestEffort({{String(end_ts, '1695064557000')}})
+    {% else %}
+    and Timestamp < now()
+    {% end %}
+    {% if defined(metric) %}
+    and Metric = {{String(metric, 'act')}}
+    {% end %}
+    and Environment = {{String(environment, 'prod', required=True)}}
+    and Datacenter = {{String(datacenter, 'chopin', required=True)}}
+    GROUP BY Environment, Datacenter, Metric, Timestamp
 
 
 NODE result_5m
 SQL >
 
     %
-        SELECT 
-          formatDateTime(Timestamp, '%Y-%m-%dT%H:%M:%SZ', 'UTC') as tsok,
-          Environment, Metric,
-          round(avgMerge(Value),2) as Value
-          FROM events_by_tags_5m
-        WHERE 1
-        {% if defined(start_ts) %}
-        and Timestamp > parseDateTimeBestEffort({{String(start_ts, '1695059358000')}})
-        {% else %}
-        and Timestamp > now() - INTERVAL 1 HOUR
-        {% end %}
-        {% if defined(end_ts) %}
-        and Timestamp < parseDateTimeBestEffort({{String(end_ts, '1695064557000')}})
-        {% else %}
-        and Timestamp < now()
-        {% end %}
-        {% if defined(metric) %}
-        and Metric = {{String(metric, 'act')}}
-        {% end %}
-        and Environment = {{String(environment, 'prod', required=True)}}
-        GROUP BY Environment, Metric, Timestamp
-
+    SELECT 
+      formatDateTime(Timestamp, '%Y-%m-%dT%H:%M:%SZ', 'UTC') as tsok,
+      Environment, Datacenter, Metric,
+      round(avgMerge(Value),2) as Value
+      FROM events_by_tags_5m
+    WHERE 1
+    {% if defined(start_ts) %}
+    and Timestamp > parseDateTimeBestEffort({{String(start_ts, '1695059358000')}})
+    {% else %}
+    and Timestamp > now() - INTERVAL 1 HOUR
+    {% end %}
+    {% if defined(end_ts) %}
+    and Timestamp < parseDateTimeBestEffort({{String(end_ts, '1695064557000')}})
+    {% else %}
+    and Timestamp < now()
+    {% end %}
+    {% if defined(metric) %}
+    and Metric = {{String(metric, 'act')}}
+    {% end %}
+    and Environment = {{String(environment, 'prod', required=True)}}
+    and Datacenter = {{String(datacenter, 'chopin', required=True)}}
+    GROUP BY Environment, Datacenter, Metric, Timestamp
 
 
 NODE result_1s
 SQL >
 
     %
-        SELECT 
-          formatDateTime(Timestamp, '%Y-%m-%dT%H:%M:%SZ', 'UTC') as tsok,
-          Environment, Metric,
-          round(avgMerge(Value),2) as Value
-          FROM events_by_tags_1s
-        WHERE 1
-        {% if defined(start_ts) %}
-        and Timestamp > parseDateTimeBestEffort({{String(start_ts, '1695059358000')}})
-        {% else %}
-        and Timestamp > now() - INTERVAL 1 HOUR
-        {% end %}
-        {% if defined(end_ts) %}
-        and Timestamp < parseDateTimeBestEffort({{String(end_ts, '1695064557000')}})
-        {% else %}
-        and Timestamp < now()
-        {% end %}
-        {% if defined(metric) %}
-        and Metric = {{String(metric, 'act')}}
-        {% end %}
-        and Environment = {{String(environment, 'prod', required=True)}}
-        GROUP BY Environment, Metric, Timestamp
-
+    SELECT 
+      formatDateTime(Timestamp, '%Y-%m-%dT%H:%M:%SZ', 'UTC') as tsok,
+      Environment, Datacenter, Metric,
+      round(avgMerge(Value),2) as Value
+      FROM events_by_tags_1s
+    WHERE 1
+    {% if defined(start_ts) %}
+    and Timestamp > parseDateTimeBestEffort({{String(start_ts, '1695059358000')}})
+    {% else %}
+    and Timestamp > now() - INTERVAL 1 HOUR
+    {% end %}
+    {% if defined(end_ts) %}
+    and Timestamp < parseDateTimeBestEffort({{String(end_ts, '1695064557000')}})
+    {% else %}
+    and Timestamp < now()
+    {% end %}
+    {% if defined(metric) %}
+    and Metric = {{String(metric, 'act')}}
+    {% end %}
+    and Environment = {{String(environment, 'prod', required=True)}}
+    and Datacenter = {{String(datacenter, 'chopin', required=True)}}
+    GROUP BY Environment, Datacenter, Metric, Timestamp
 
 
 NODE endpoint
 SQL >
 
     %
-        SELECT * 
-        {% if defined(start_ts) and defined(end_ts) and UInt64(end_ts) - UInt64(start_ts) < 360100 %}
-          FROM result_1s
-        {% elif defined(start_ts) and defined(end_ts) and UInt64(end_ts) - UInt64(start_ts) < 10801000 %}
-          FROM result_5m
-        {% else %}
-          FROM result_15m
-        {% end %}
-
-
+    SELECT * 
+    {% if defined(start_ts) and defined(end_ts) and UInt64(end_ts) - UInt64(start_ts) < 360100 %}
+      FROM result_1s
+    {% elif defined(start_ts) and defined(end_ts) and UInt64(end_ts) - UInt64(start_ts) < 10801000 %}
+      FROM result_5m
+    {% else %}
+      FROM result_15m
+    {% end %}

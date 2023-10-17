@@ -61,7 +61,7 @@ This Guide is now broken into several stages:
 
 ### Requirements
 
-You will need an empty [Tinybird Workspace](https://ui.tinybird.co/), a [Grafana Cloud deployment](https://grafana.com/auth/sign-up/create-user), this repo, and the Tinybird CLI installed in a Python virtual environment. Note that introductory versions of Tinybird and Grafana are both free. The instructions below will guide you through each of these steps as you go.
+You will need an empty [Tinybird Workspace](https://ui.tinybird.co/), a [Grafana Cloud deployment](https://grafana.com/auth/sign-up/create-user), [this repo](https://github.com/tinybirdco/demo_versions), and the [Tinybird CLI](https://pypi.org/project/tinybird-cli/) installed in a Python virtual environment. Note that introductory versions of Tinybird and Grafana are both free. The instructions below will guide you through each of these steps as you go.
 
 This project makes use of Github Pull Requests to show the full development lifecycle, so if your Github account has particular restrictions please consider any impact that may have.
 
@@ -129,7 +129,7 @@ In a typical development scenario, you might have started with an empty Tinybird
 ### Generate some data
 
 Now is a good time to get some initial data into your data project.
-The datagen.py script has no unusual dependencies, and the default volumes are a good starting point.
+The datagen.py script has no unusual dependencies, and the default volumes are a good starting point. It will use the Tinybird Token you have already setup in the project in the earlier step to push data to the Workspace.
 
 You can run it in a Terminal with
 
@@ -205,13 +205,16 @@ This will put you into the Environments UI, where you see a new dropdown to sele
 
 Before we go and make a child Environment, if you find that you simply want to run a couple of queries without making any persistent changes, you can use the Playground feature in the main sidebar. This creates a transient Pipe which you can work within and share with others, but you cannot change Datasources or APIs from it.
 
-It is useful for troubleshooting or quick investigations, but if you want to develop more complex changes you probably want to use Environments as outlined in this guide.
+It is useful for troubleshooting or quick investigations, but if you want a true Sandbox to develop more complex changes you probably want to use Environments as outlined in this guide.
 
 ### Creating a child Environment
 
 In the drop down, click on create new Environment.
 Name it something easy to type, as you'll likely end up typing it in the CLI now and then.
+
 Choose to copy the last partition so you have some sample data to develop against - don't worry if you don't do this - you can run a query against a Datasource within a child Environment to load more data from the parent Environment whenever you like.
+
+This process is exactly the same as what the CI integration does when it creates a temporary Environment to test your pull requests, so you can use this to test your changes locally before committing them to Git.
 
 ### Removing a child Environment
 
@@ -226,7 +229,7 @@ Now let's have a look at examples of the some changes already executed in the re
 
 ### Review adding a Pipe
 
-In [pull request #1](https://github.com/tinybirdco/demo_versions/pull/1) we added a Pipe with a new API to the data project, the purpose of this API is to return the volume of events being processed in the Workspace so we can monitor them in Grafana.
+In [pull request #1](https://github.com/tinybirdco/demo_versions/pull/1) we added a Pipe with a new API to the data project, the purpose of this API is to return the listing of items for each dropdown filter in the Grafana dashboard.
 
 The PR is super simple - there is a single commit with a single [file](https://github.com/tinybirdco/demo_versions/pull/1/files) added which describes the Pipe and a new Token with read permissions.
 
@@ -236,9 +239,11 @@ We also do not make use of the advanced Versioning features which automatically 
 
 ### Concepts: Data Project Version and Resource Version
 
+This section summarises documention about Custom deploymen strategies [here](https://www.tinybird.co/docs/guides/deployment-strategies.html?highlight=cd%20deploy%20sh#custom-deployments) in the Tinybird Documentation
+
 The next example introduces versioning at the overall data project level, and at the individual resource (Pipe, etc.) level within the data project.
 
-The data project version follows [semantic versioning](https://semver.org/) and is recorded in the `.tinyenv` file for the current Git branch you are working on. When you want to increment your overall project version, usually because you need to migrate resources like a Datasource between incompatible states (like changing a column in the schema), you update this file to a new version and create a `cd-deploy.sh` script in a matching subdirectory of `deploy'. This script is used to execute the commands to migrate your resources from the previous version to this new one, by running things like SQL queries or populate commands.
+The data project version follows [semantic versioning](https://semver.org/) and is recorded in the `.tinyenv` file for the current Git branch you are working on. When you want to increment your overall project version, usually because you need to migrate resources like a Datasource between incompatible states (like changing a column in the schema), you update this file to a new version and create a `ci-deploy.sh` and/or `cd-deploy.sh` script in a matching subdirectory of `deploy'. This script is used to execute the commands to migrate your resources from the previous version to this new one, by running things like SQL queries or populate commands.
 
 So, if your `.tinyenv` file has `VERSION 1.0.0` in it, then your script to migrate to that version during deployment should be in `deploy/1.0.0/cd-deploy.sh`. You can also have a `ci-deploy.sh` file if you need commands for the CI portion of your workflow, but in this case we've only needed them for CD.
 
@@ -355,9 +360,9 @@ You can delete the Environment by switching to it in the UI and going to Setting
 
 ### A complex change: Adding a field to a Datasource from a Materialized View
 
-Now that we've executed the overall process to prepare, test, and merge a new pull request using the suggested developer workflow, let's apply our new experience to a more complex workflow
+Now that we've executed the overall process to prepare, test, and merge a new pull request using the suggested developer workflow, let's apply our new experience to a more complex iterative change.
 
-Following the example earlier where we showed adding 'Server' as in indexed column, this time we will add 'Datacenter'. We've prepared an example PR for you to copy the changes from [here](https://github.com/tinybirdco/demo_versions/pull/2/files).
+Following the example earlier where we showed adding 'Datacenter' as in indexed column, this time we will add 'Server'. We've prepared an example PR for you to copy the changes from [here](https://github.com/tinybirdco/demo_versions/pull/2/files).
 
 In this process, we're going to walk you through the typical UI process for iterating a Materialized View, and then pulling the changes down to your IDE. If you already know exactly what changes you want to make, you could just edit the files directly in your IDE, but you wouldn't have the benefit of the UI helping you avoid mistakes before the CICD process checks your code - using the UI is an easy way to avoid typos!
 
@@ -369,11 +374,12 @@ We're going to give you a summary of steps to follow here, as the exact code exa
 2. Create a new child environment, let's name it 'new_feature'. Ensure you copy the last partition, as before.
 3. In the events_by_tags_mv Pipe, unlink the Materialized View to allow you to edit the Pipe.
 4. Because adding a column will change the schema of the downstream Datasource, delete the previously attached Datasource 'events_by_tags'. Don't worry, we're about to recreate it as part of our UI.
-5. Make the changes to the Pipe using [this example](https://github.com/tinybirdco/epimetheus/blob/add_column_to_mv/pipes/events_by_tags_mv.pipe). Note the Select, Group By, and ENGINE_SORTING_KEY are updated. Don't worry about the VERSION statement just yet, focus on being the developer in the UI figuring out their SQL changes.
+5. Make the changes to the Pipe using [this example](https://github.com/tinybirdco/demo_versions/blob/add_column_to_mv/pipes/events_by_tags_mv.pipe). Note the Select, Group By, and ENGINE_SORTING_KEY are updated. Don't worry about the VERSION statement just yet, focus on being the developer in the UI figuring out their SQL changes.
+6. Ensure that you are selecting `server` with a lowercase S from the attributes, and creating a column as `Server` with uppercase S to match the other indexed columns.
 6. Now recreate the Materialized View using the green publish button. Make sure you reuse the same name, and observe that it'll pick up the new column you've created.
 7. Now let's go to the 'events_by_tags_chart' Pipe which has our API for Grafana.
-8. In here, add the 'Datacenter' column to the SELECT statement, as well as the filter parameters (copy the environment one and replace with datacenter with a default of 'chopin'). Here's the [example](https://github.com/tinybirdco/epimetheus/blob/add_column_to_mv/pipes/events_by_tags_chart.pipe) to check against.
-9. Your API will instantly update with the new capability, you can check the output by hitting the green 'View API' button and using one of the sample calls to see that the Datacenter is now included in the output.
+8. In here, add the 'Server' column to the SELECT statement, as well as the filter parameters (copy the environment one and replace with server with a default of 'dove'), and the GROUP BY. Anywhere you see 'Datacenter' you should ensure 'Server' is next to it.
+9. Your API will instantly update with the new capability, you can check the output by hitting the green 'View API' button and using one of the sample calls to see that the Server is now included in the output.
 
 Now that our UI has the changes we want, and we've tested they work, we can pull those changes down into our IDE
 
@@ -384,10 +390,10 @@ Now that our UI has the changes we want, and we've tested they work, we can pull
 Now you should have all the changes from your child Environment in your IDE.
 Next we are going to introduce the Versioning controls so that these changes can be rolled out without breaking the existing production applications.
 
-1. In the two Pipes we have edited, increment the resource Version at the top of the file - it should now be `VERSION 2`
-2. Open the `.tinyenv` file and increment the data project Version - `VERSION=0.0.2`
+1. In the Pipes we have edited, increment the resource Version at the top of the file - it should now be `VERSION 1`
+2. Open the `.tinyenv` file and increment the data project Version - `VERSION=0.0.1`
 3. Create a new deploy subdirectory matching this version, and copy the cd-deploy.sh file from the previous version into it.
-4. Change the `tb pipe populate` command to match the version that will be created, so it should be like `tb pipe populate events_by_tags_1s_mv__v2 --node events_by_tags_1s_0 --wait`
+4. Change the `tb pipe populate` commands to match the version that will be created, so they should be like `tb pipe populate events_by_tags_1s_mv__v1 --node events_by_tags_1s_0 --wait`
 5. You can compare your changes to those in the files in the example PR [here](https://github.com/tinybirdco/demo_versions/pull/2/files)
 
 Now that we have our versioning instructions in place, you can commit the changes to your branch, push the branch to Github, and create a pull request out of it.

@@ -1,10 +1,13 @@
+VERSION 1
+# Data Source created from Pipe 'events_by_tags_5m_mv'
 
 SCHEMA >
     `Metric` String,
     `Timestamp` DateTime,
     `Value` AggregateFunction(avg, Int8),
-    `Environment` String
+    `Environment` String,
+    `Datacenter` String
 
 ENGINE "AggregatingMergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(Timestamp)"
-ENGINE_SORTING_KEY "Environment, Metric, Timestamp"
+ENGINE_SORTING_KEY "Environment, Datacenter, Metric, Timestamp"
