@@ -1,0 +1,24 @@
+TOKEN "event_volume_mv_endpoint_read" READ
+
+NODE event_volume_mv_0
+SQL >
+
+    %
+        SELECT 
+        formatDateTime(toStartOfMinute(timestamp), '%Y-%m-%dT%H:%M:%SZ') as tsok,
+        toStartOfMinute(timestamp) as timestamp,
+        sum(written_rows) as rows, 
+        floor(sum(written_bytes)/1024) as KiloBytes
+        FROM tinybird.datasources_ops_log
+        WHERE
+            datasource_name = 'events'
+            AND event_type = 'append-hfi'
+           {% if defined(start_ts) %}
+           and timestamp > parseDateTimeBestEffort({{String(start_ts, '2023-09-15T00:00:00.000Z')}})
+           {% else %}
+           and timestamp > now() - INTERVAL 1 HOUR
+           {% end %}
+           {% if defined(end_ts) %}
+           and timestamp < parseDateTimeBestEffort({{String(end_ts, '2023-12-31T23:59:59.999Z')}})
+           {% end %}
+        GROUP BY timestamp
