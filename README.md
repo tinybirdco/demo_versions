@@ -114,17 +114,19 @@ Use the same Admin token you applied to `tb auth`.
 
 Note that this Token has admin rights to the Tinybird Workspace, and is accessible from Github actions, so be sure to review any pull requests that your repository may receive to ensure the Token is used with care in the CICD process.
 
-### Do the initial deployment
+### Connect Tinybird to your Github repo
 
-Now that you have instructed Tinybird and Github to be friends, you can trigger the initial push of the Data project to Tinybird ready to use.
+Now we need to instruct Tinybird and Github to be friends, which will trigger the initial push of the Data project to Tinybird ready to use.
 
 In the project root where you executed `tb auth` now run
 
 ```shell
-tb push
+tb init --git
 ```
 
 In a typical development scenario, you might have started with an empty Tinybird workspace and developed the Data Project in the UI before deciding it was mature enough to commit to Git and mark as ready for production software development practices. This is exactly what I have done in this case, you are just skipping that part of the process and deploying my project which has already been iterated on some of the APIs as a working example.
+
+Depending on how you set up the repo, you may have to push the initial commit to Github yourself, but if you forked the repo and cloned it down then it should already be there.
 
 ### Generate some data
 
@@ -229,11 +231,11 @@ Now let's have a look at examples of the some changes already executed in the re
 
 ### Review adding a Pipe
 
-In [pull request #1](https://github.com/tinybirdco/demo_versions/pull/1) we added a Pipe with a new API to the data project, the purpose of this API is to return the listing of items for each dropdown filter in the Grafana dashboard.
+In [pull request #2](https://github.com/tinybirdco/demo_versions/pull/2) we added a Pipe with a new API to the data project, the purpose of this API is to return the listing of items for each dropdown filter in the Grafana dashboard.
 
 The PR is super simple - there is a single commit with a single [file](https://github.com/tinybirdco/demo_versions/pull/1/files) added which describes the Pipe and a new Token with read permissions.
 
-The PR was automatically tested with the templated Github actions, of particular interest are the automatic pipe regression tests in [here](). In this case, because the Pipe doesn't interact with any of the existing APIs or Pipes, there's nothing it could really break, and thus it's a 'simple' additive change.
+The PR was automatically tested with the templated Github actions, of particular interest are the automatic pipe regression tests in [here](https://github.com/tinybirdco/ci/blob/main/.github/workflows/ci.yml). In this case, because the Pipe doesn't interact with any of the existing APIs or Pipes, there's nothing it could really break, and thus it's a 'simple' additive change.
 
 We also do not make use of the advanced Versioning features which automatically create version-numbered instances of Pipes and Datasources, and scripts to migrate between versions (we'll do this in the complex example).
 
@@ -259,16 +261,17 @@ This is a more complex, but very common change, where you are already extracting
 
 In this case, consider the initial or Version 0 events Datasource in the data project - we extract and index the 'environment' and 'server' tags, but not the 'datacenter' tag. Imagine you as a developer want this to be available in the Grafana monitoring dashboard, or that you want to filter by datacenter in the API as a part of your project responsibilities.
 
-In [this](https://github.com/tinybirdco/demo_versions/pull/2) pull request we again have one commit with all our changes, however you may break this over several commits and merge requests if that suited your development flow.
+In [this](https://github.com/tinybirdco/demo_versions/pull/3) pull request we again have one commit with all our changes, however you may break this over several commits and merge requests if that suited your development flow.
 
 Now let us look at the changes in the PR to see in more detail what Versioning adds to the situation.
 
-* in the [Datasource definition](https://github.com/tinybirdco/demo_versions/blob/add_column_to_mv/datasources/events_by_tags.datasource) we start by adding (or incrementing) the `VERSION` tag to 1, indicating that the system should create a `__v1` copy of the Datasource with these new changes. This allows us to migrate our downstream consumers of the API to this newer version once we are happy with it. We then also make the necessary changes to the Pipe to handle `Datacenter` being indexed as a separate column by adding it to the schema and the Sorting Key.
+* in the [Datasource definition](https://github.com/tinybirdco/demo_versions/pull/3/files#diff-ca5bc6b1a49a2881f57cc19c41025c8fedaae9ca565ccf972bce1940efd7cd34) we start by adding (or incrementing) the `VERSION` tag to 1, indicating that the system should create a `__v1` copy of the Datasource with these new changes. This allows us to migrate our downstream consumers of the API to this newer version once we are happy with it. We then also make the necessary changes to the Pipe to handle `Datacenter` being indexed as a separate column by adding it to the schema and the Sorting Key.
 * Following these same principles, we also update the other Pipes to both increment the version and support the new 'Datacenter' tag being indexed.
-* Because we are responsibile developers, we also ensure that the [data fixture](https://github.com/tinybirdco/demo_versions/blob/add_column_to_mv/datasources/fixtures/events.ndjson) for the raw datasource is updated to reflect this new column being included for any tests we may want to run.
-* Next let us look at the [deployment script](https://github.com/tinybirdco/demo_versions/blob/add_column_to_mv/deploy/0.0.1/cd-deploy.sh) - the actual commands in cd-deploy.sh in this case are very simple - they instruct Tinybird to deploy this version, and then run a 'populate' command on that Pipe to ensure the new Datasource version is backfilled with all necessary data.
+* Because we are responsibile developers, we also ensure that the [data fixture](https://github.com/tinybirdco/demo_versions/pull/3/files#diff-9d6cb03cb8a0067c51452329d3cabb5f3cc68e73dac4f110dd7e5aca4fc48260) for the raw datasource is updated to reflect this new column being included for any tests we may want to run.
+* Next let us look at the [deployment script](https://github.com/tinybirdco/demo_versions/pull/3/files#diff-8912b3a44500141326bf6f4a17204aa7ec38c10db5b6bef68ee11288e95f6cfd) - the actual commands in cd-deploy.sh in this case are very simple - they instruct Tinybird to deploy this version, and then run a 'populate' command on that Pipe to ensure the new Datasource version is backfilled with all necessary data.
+* Finally, we have also incremented the .tinyenv [file](https://github.com/tinybirdco/demo_versions/pull/3/files#diff-83cf7b769928eb93c3d9aa54cae5a7b4ba84375ebcfd461680aaf15d7a4efb36) to `VERSION=0.0.1`
 
-Now when this pull request is merged, Tinybird will follow the instructions to create the `__v1` Pipes and Datasources, and execute the `cd-deploy.sh` migration script to populate the Materialized View.
+Now when this pull request was merged, Tinybird has follow the instructions to create the `__v1` Pipes and Datasources, and execute the `cd-deploy.sh` migration script to populate the Materialized Views.
 
 We would then take steps to migrate downstream applications like our Grafana dashboard to use these endpoints, and we could then retire them when no longer needed - generally via further commands in some future pull request.
 
@@ -362,9 +365,9 @@ You can delete the Environment by switching to it in the UI and going to Setting
 
 Now that we've executed the overall process to prepare, test, and merge a new pull request using the suggested developer workflow, let's apply our new experience to a more complex iterative change.
 
-Following the example earlier where we showed adding 'Datacenter' as in indexed column, this time we will add 'Server'. We've prepared an example PR for you to copy the changes from [here](https://github.com/tinybirdco/demo_versions/pull/2/files).
+Following the example earlier where we showed adding 'Datacenter' as in indexed column, this time we will add 'Server'. We've prepared an example PR for you to copy the changes from [here](https://github.com/tinybirdco/demo_versions/pull/3/files), where we added the 'Datacenter' column instead.
 
-In this process, we're going to walk you through the typical UI process for iterating a Materialized View, and then pulling the changes down to your IDE. If you already know exactly what changes you want to make, you could just edit the files directly in your IDE, but you wouldn't have the benefit of the UI helping you avoid mistakes before the CICD process checks your code - using the UI is an easy way to avoid typos!
+In this process, we're going to walk you through the typical UI process for iterating several related Materialized Views, and then pulling the changes down to your IDE. If you already know exactly what changes you want to make, you could just edit the files directly in your IDE, but you wouldn't have the benefit of the UI helping you avoid mistakes before the CICD process checks your code - using the UI is an easy way to avoid typos!
 
 #### UI Walkthrough of a complex change
 
@@ -372,13 +375,13 @@ We're going to give you a summary of steps to follow here, as the exact code exa
 
 1. In the Tinybird UI, go back to the read-only 'main' Environment
 2. Create a new child environment, let's name it 'new_feature'. Ensure you copy the last partition, as before.
-3. In the events_by_tags_mv Pipe, unlink the Materialized View to allow you to edit the Pipe.
-4. Because adding a column will change the schema of the downstream Datasource, delete the previously attached Datasource 'events_by_tags'. Don't worry, we're about to recreate it as part of our UI.
-5. Make the changes to the Pipe using [this example](https://github.com/tinybirdco/demo_versions/blob/add_column_to_mv/pipes/events_by_tags_mv.pipe). Note the Select, Group By, and ENGINE_SORTING_KEY are updated. Don't worry about the VERSION statement just yet, focus on being the developer in the UI figuring out their SQL changes.
+3. In the events_by_tags_1s_mv, events_by_tags_5m_mv, and events_by_tags_15m_mv Pipes, unlink the Materialized Views to allow you to edit the Pipes.
+4. Because adding a column will change the schema of the downstream Datasources, delete the previously attached Datasources 'events_by_tags_*'. Don't worry, we're about to recreate them as part of our UI changes.
+5. Make the changes to the Pipes using the example from PR #3 above. Note the Select, Group By, and ENGINE_SORTING_KEY are updated. Don't worry about the VERSION statement just yet, focus on being the developer in the UI figuring out their SQL changes.
 6. Ensure that you are selecting `server` with a lowercase S from the attributes, and creating a column as `Server` with uppercase S to match the other indexed columns.
 6. Now recreate the Materialized View using the green publish button. Make sure you reuse the same name, and observe that it'll pick up the new column you've created.
 7. Now let's go to the 'events_by_tags_chart' Pipe which has our API for Grafana.
-8. In here, add the 'Server' column to the SELECT statement, as well as the filter parameters (copy the environment one and replace with server with a default of 'dove'), and the GROUP BY. Anywhere you see 'Datacenter' you should ensure 'Server' is next to it.
+8. In here, add the 'Server' column to the SELECT statement, as well as the filter parameters (copy the environment one and replace with server with a default of 'dove'), and the GROUP BY. Anywhere you see 'Datacenter' you should ensure 'Server' is next to it in each of the Nodes.
 9. Your API will instantly update with the new capability, you can check the output by hitting the green 'View API' button and using one of the sample calls to see that the Server is now included in the output.
 
 Now that our UI has the changes we want, and we've tested they work, we can pull those changes down into our IDE
@@ -390,11 +393,11 @@ Now that our UI has the changes we want, and we've tested they work, we can pull
 Now you should have all the changes from your child Environment in your IDE.
 Next we are going to introduce the Versioning controls so that these changes can be rolled out without breaking the existing production applications.
 
-1. In the Pipes we have edited, increment the resource Version at the top of the file - it should now be `VERSION 1`
-2. Open the `.tinyenv` file and increment the data project Version - `VERSION=0.0.1`
+1. In the Pipes and Datasources we have edited, increment the resource Version at the top of the file - it should now be `VERSION 2`
+2. Open the `.tinyenv` file and increment the data project Version - `VERSION=0.0.2`
 3. Create a new deploy subdirectory matching this version, and copy the cd-deploy.sh file from the previous version into it.
-4. Change the `tb pipe populate` commands to match the version that will be created, so they should be like `tb pipe populate events_by_tags_1s_mv__v1 --node events_by_tags_1s_0 --wait`
-5. You can compare your changes to those in the files in the example PR [here](https://github.com/tinybirdco/demo_versions/pull/2/files)
+4. Change the `tb pipe populate` commands to match the version that will be created, so they should be like `tb pipe populate events_by_tags_1s_mv__v2 --node events_by_tags_1s_0 --wait`
+5. You can compare your changes to those in the files in the example PR [here](https://github.com/tinybirdco/demo_versions/pull/3/files)
 
 Now that we have our versioning instructions in place, you can commit the changes to your branch, push the branch to Github, and create a pull request out of it.
 The CI process will then pick that up and attempt to automatically test for regressions.
@@ -402,3 +405,5 @@ The CI process will then pick that up and attempt to automatically test for regr
 One regression you are likely to hit is that the endpoint is now responding with more latency because it is fetching more data. This is expected, and you can apply a label to the PR you have created to instruct the tests to ignore this result, the tag is `--assert-time-increase-percentage -1`
 
 Examine the output of the checks to ensure everything looks green, if it is, you can go head and merge the PR and then clean up your development Environment as before.
+
+Now if you generate more data on your `main` Environment and examine your Grafana dashboard, you should see that the `Server` filter is now available and working as expected.
