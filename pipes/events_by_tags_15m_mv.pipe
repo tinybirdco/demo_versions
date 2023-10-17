@@ -1,3 +1,4 @@
+VERSION 1
 NODE mv_15m
 SQL >
 
@@ -5,14 +6,14 @@ SQL >
         id AS Metric,
         toDateTime(toStartOfFifteenMinutes(ts)) AS Timestamp,
         avgState(toInt8(val)) AS Value,
-        att['env'] AS Environment
+        att['env'] AS Environment,
+        att['datacenter'] as Datacenter
     FROM events
     GROUP BY
-        Environment,
+        Environment, 
+        Datacenter,
         Metric,
         Timestamp
 
 TYPE materialized
 DATASOURCE events_by_tags_15m
-
-
