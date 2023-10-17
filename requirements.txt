@@ -1,0 +1,4 @@
+tinybird-cli
+faker
+click
+requests

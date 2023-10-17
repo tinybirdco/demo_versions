@@ -1,0 +1,18 @@
+NODE mv_1s
+SQL >
+
+    SELECT
+        id AS Metric,
+        toDateTime(toStartOfSecond(ts)) AS Timestamp,
+        avgState(toInt8(val)) AS Value,
+        att['env'] AS Environment
+    FROM events
+    GROUP BY
+        Environment,
+        Metric,
+        Timestamp
+
+TYPE materialized
+DATASOURCE events_by_tags_1s
+
+

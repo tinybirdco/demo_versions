@@ -1,0 +1,12 @@
+TOKEN "column_listings_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT 
+    distinct {{column(col_name, 'Environment')}} as result
+    FROM events_by_tags_5m
+    where Timestamp > now() - INTERVAL 1 HOUR
+
+

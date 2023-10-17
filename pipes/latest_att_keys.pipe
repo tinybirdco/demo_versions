@@ -1,0 +1,13 @@
+TOKEN "latest_att_keys_endpoint_read" READ
+
+NODE latest_att_keys_0
+SQL >
+
+    SELECT
+        id,
+        mapKeys(argMax(att, ts)) AS latest_att_keys
+    FROM events
+    WHERE ts > now() - INTERVAL 1 HOUR
+    GROUP BY id
+
+
