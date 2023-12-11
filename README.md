@@ -97,9 +97,10 @@ We will then authenticate to your Tinybird Workspace in the CLI we installed in 
 * Open up the `Tokens` option in the left sidebar menu
 * Select the `admin <user email>` token, and copy it to your clipboard
 * In your terminal, change directory to the root of the project where the datagen.py script is located.
-* Execute the following command, and paste in the user admin token:
+* Execute the following command, and paste in the user admin token (ensure you are inside the `/tinybird` dir):
 
 ```shell
+cd ./tinybird
 tb auth
 ```
 
@@ -118,7 +119,7 @@ Note that this Token has admin rights to the Tinybird Workspace, and is accessib
 
 Now we need to instruct Tinybird and Github to be friends, which will trigger the initial push of the Data project to Tinybird ready to use.
 
-In the project root where you executed `tb auth` now run
+In the `/tinybird` dir where you executed `tb auth` now run
 
 ```shell
 tb init --git
@@ -133,7 +134,7 @@ Depending on how you set up the repo, you may have to push the initial commit to
 Now is a good time to get some initial data into your data project.
 The datagen.py script has no unusual dependencies, and the default volumes are a good starting point. It will use the Tinybird Token you have already setup in the project in the earlier step to push data to the Workspace.
 
-You can run it in a Terminal with
+You can run it in a Terminal with the following command (note that `datagen.py` is in the repo root, you'll need to move back a dir from the `./tinybird` dir)
 
 ```shell
 python datagen.py
