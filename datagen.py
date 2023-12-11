@@ -18,7 +18,7 @@ METRICS_ENDPOINT = "/v0/pipes/latest_att_keys.json"
 
 def read_tb_info():
     # Read in token from .tinyb file
-    with open(os.path.expanduser('.tinyb'), 'r') as f:
+    with open(os.path.expanduser('./tinybird/.tinyb'), 'r') as f:
         tb_info = json.load(f)
     return tb_info
 
