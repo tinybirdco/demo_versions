@@ -20,7 +20,7 @@ The repo is intended to be instructional as a combination data project and some 
 
 The data use case is modeled on a typical metric reporting situation: a single aggregated stream of X different metric events from Y source machines which are differentiated by Z tagged attributes. The Metrics are randomly named, with variable value distribution, and apart from a few common tags like 'environment' and 'server' the tags are also randomly generated to simulate a broader loading pattern.
 
-A sample of the data generated is [here](https://github.com/tinybirdco/demo_versions/blob/main/datasources/fixtures/events.ndjson); this sample is used for fixture testing and looks like this:
+A sample of the data generated is [here](https://github.com/tinybirdco/demo_versions/blob/main/tinybird/datasources/fixtures/events.ndjson); this sample is used for fixture testing and looks like this:
 
 ``` json
 {"id": "KEEPALIVE", "ts": "2023-09-18T11:38:29.645Z", "val": "1", "att": {"env": "dev", "server": "sparrow", "datacenter": "chopin"}}

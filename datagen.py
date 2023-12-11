@@ -163,7 +163,7 @@ def generate_events_fixture(batch_size=10):
         time.sleep(0.01)  # Ensure events are slightly spaced apart
 
     # Output as ndjson file
-    with open("datasources/fixtures/events.ndjson", "w") as f:
+    with open("tinybird/datasources/fixtures/events.ndjson", "w") as f:
         for event in batch:
             f.write(json.dumps(event) + "\n")
 
